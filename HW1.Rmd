@@ -119,33 +119,14 @@ done
     zcat ~/mimic/core/admissions.csv.gz | tail -n +2 | wc -l
     ```
 
-    ```{bash}
-    zcat ~/mimic/core/admissions.csv.gz | \
-      tail -n +2 | sort | uniq -f 0 -w 8 | wc -l
-
-    ```
-
 6.  What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, and `ethnicity`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
 
     ```{bash}
     zcat ~/mimic/core/admissions.csv.gz | \
-      awk -F "," 'NR == 1 {print $6}; NR > 1 {print $6 | "sort | uniq -c"}'
+      tail -n +2 | sort | uniq -f 0 -w 8 | wc -l
+    zcat ~/mimic/core/admissions.csv.gz | \
+      awk -F "," 'NR > 1 {print $1 | "sort | uniq"}' | wc -l
     ```
-
-```{bash}
-zcat ~/mimic/core/admissions.csv.gz | \
-  awk -F "," 'NR == 1 {print $7}; NR > 1 {print $7 | "sort | uniq -c"}'
-```
-
-```{bash}
-zcat ~/mimic/core/admissions.csv.gz | \
-  awk -F "," 'NR == 1 {print $9}; NR > 1 {print $9 | "sort | uniq -c"}'
-```
-
-```{bash}
-zcat ~/mimic/core/admissions.csv.gz | \
-  awk -F "," 'NR == 1 {print $12}; NR > 1 {print $12 | "sort | uniq -c"}'
-```
 
 ## Q4. Who's popular in Price and Prejudice
 
