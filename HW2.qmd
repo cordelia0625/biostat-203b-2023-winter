@@ -34,6 +34,7 @@ library(data.table)
 library(lubridate)
 library(R.utils)
 library(tidyverse)
+library(dplyr)
 ```
 
 MIMIC data location
@@ -111,10 +112,8 @@ zcat ~/mimic/icu/icustays.csv.gz | head -10
 3.  Summarize the number of ICU stays per `subject_id` by graphs.
 
     ```{r}
-    #ggplot(data=icustays_tble$intime)
-    #ggplot2::fortify(icustays_tble)
-
-    #NEEDS MORE WORK
+    icu_count<-icustays_tble %>% group_by(subject_id)%>% summarise(COUNT = n())
+    hist(x=icu_count$COUNT, main="number of ICU stays")
     ```
 
 4.  For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
@@ -143,6 +142,10 @@ zcat ~/mimic/core/admissions.csv.gz| head -10
     ```
 
 2.  Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadmi_id`.
+
+    ```{r}
+
+    ```
 
 3.  Summarize the following variables by graphics.
 
