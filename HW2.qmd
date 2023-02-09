@@ -43,6 +43,8 @@ MIMIC data location
 mimic_path <- "C:\\Users\\Cordelia\\mimic-iv-1.0"
 ```
 
+Comment: the link is not working for my laptop because the home setting for R . Dr. Zhou provided this temporary solution so that I can continue to work on this homework.
+
 In this exercise, we use tidyverse (ggplot2, dplyr, etc) to explore the [MIMIC-IV](https://mimic.mit.edu/docs/iv/) data introduced in [homework 1](https://ucla-biostat-203b.github.io/2023winter/hw/hw1/hw1.html) and to build a cohort of ICU stays.
 
 Display the contents of MIMIC data folder.
@@ -80,8 +82,7 @@ system.time(fread(str_c(mimic_path, "/core/admissions.csv.gz")))
 
 ```
 
-```{}
-```
+Ans: the one that appears to be the fastest is the read.csv function. The read_csv one seemed to be the slowest. There is a difference between the default and the one in tidyverse. read_csv noticed some issues with the column.
 
 ## Q2. ICU stays
 
@@ -95,14 +96,35 @@ zcat ~/mimic/icu/icustays.csv.gz | head -10
 1.  Import `icustatys.csv.gz` as a tibble `icustays_tble`.
 
     ```{r}
-    icustays_table <- tibble ()
+    icu<-(read_csv(str_c(mimic_path, "/icu/icustays.csv.gz")))
+    icustays_tble <- as.tibble(icu)
     ```
 
 2.  How many unique `subject_id`? Can a `subject_id` have multiple ICU stays?
 
+    ```{r}
+
+    icu_sub_ID<-n_distinct (icustays_tble$subject_id)
+    icu_sub_ID
+    ```
+
 3.  Summarize the number of ICU stays per `subject_id` by graphs.
 
+    ```{r}
+    #ggplot(data=icustays_tble$intime)
+    #ggplot2::fortify(icustays_tble)
+
+    #NEEDS MORE WORK
+    ```
+
 4.  For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
+
+    ```{r}
+    icustays_tble <- icustays_tble %>%
+      arrange(subject_id, intime) %>%
+      distinct(subject_id, .keep_all = TRUE) %>%
+      print(width = Inf)
+    ```
 
 ## Q3. `admission` data
 
@@ -114,6 +136,11 @@ zcat ~/mimic/core/admissions.csv.gz| head -10
 ```
 
 1.  Import `admissions.csv.gz` as a tibble `admissions_tble`.
+
+    ```{r}
+    admin<-(read_csv(str_c(mimic_path, "/core/admissions.csv.gz")))
+    admissions_tble <- as.tibble(admin)
+    ```
 
 2.  Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadmi_id`.
 
@@ -154,6 +181,11 @@ zcat ~/mimic//hosp/d_labitems.csv.gz| head -10
 ```
 
 1.  Find how many rows are in `labevents.csv.gz`.
+
+    ```{r}
+    #labevents_tble<-read_csv(str_c(mimic_path, "/hosp/labevents.csv.gz"))
+    #nrow(labevents_tble)
+    ```
 
 2.  We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), and glucose (50931). Retrieve a subset of `labevents.csv.gz` only containing these items for the patients in `icustays_tble` as a tibble `labevents_tble`.
 
