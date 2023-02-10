@@ -105,24 +105,31 @@ zcat ~/mimic/icu/icustays.csv.gz | head -10
 
     ```{r}
 
-    icu_sub_ID<-n_distinct (icustays_tble$subject_id)
-    icu_sub_ID
+    n_distinct (icustays_tble$subject_id)
+
     ```
 
 3.  Summarize the number of ICU stays per `subject_id` by graphs.
 
     ```{r}
-    icu_count<-icustays_tble %>% group_by(subject_id)%>% summarise(COUNT = n())
-    hist(x=icu_count$COUNT, main="number of ICU stays")
+    icu_count<-icustays_tble %>% 
+      group_by(subject_id)%>% 
+      summarise(COUNT = n())
+    hist(x=icu_count$COUNT, main="ICU stays of a patient")
     ```
 
 4.  For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`. (Hint: `slice_min` and `slice_max` may take long. Think alternative ways to achieve the same function.)
 
     ```{r}
     icustays_tble <- icustays_tble %>%
-      arrange(subject_id, intime) %>%
-      distinct(subject_id, .keep_all = TRUE) %>%
+      group_by(subject_id) %>%
+      arrange(intime, .by_group = TRUE) %>%
+      slice_head(n=1)%>%
+      ungroup()%>%
       print(width = Inf)
+    #distinct would also work
+    #   arrange(subject_id, intime) %>%
+    #   distinct(subject_id, .keep_all = TRUE) %>%
     ```
 
 ## Q3. `admission` data
@@ -144,18 +151,82 @@ zcat ~/mimic/core/admissions.csv.gz| head -10
 2.  Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadmi_id`.
 
     ```{r}
-
+    # admissions_tble <-admissions_tble%>%
+    #   semi_join(icustays_tble, by=c('subject_id','hadmi_id'))%>%
+    #   print(width=Inf)
+    semi_join(x = admissions_tble, y = icustays_tble, by = c("subject_id", "hadm_id"))
     ```
 
 3.  Summarize the following variables by graphics.
 
     -   admission year\
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=year(admittime)))+
+      geom_bar()+
+      labs(x="admission year")
+
+    ```
+
     -   admission month\
-    -   admission month day\
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=months.Date(admittime)))+
+      geom_bar()+
+      labs(x="admission month")
+    ```
+
+    -   admission month day
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=mday(admittime)))+
+      geom_bar()+
+      labs(x="admission month day")
+    ```
+
     -   admission week day\
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=weekdays.Date(admittime)))+
+      geom_bar()+
+      labs(x="admission week day")
+    ```
+
     -   admission hour (anything unusual?)\
+        There are a lot of patients admitted at midnight, which are likely results of randomly inputting because it was not recorded.
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=hour(admittime)))+
+      geom_bar()+
+      labs(x="admission hour")
+    ```
+
     -   admission minute (anything unusual?)\
-    -   length of hospital stay (anything unusual?)
+        There are also a lot of patients admitted at 0 hours, which may be due to similar reasons as above with admission hour.
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=minute(admittime)))+
+      geom_bar()+
+      labs(x="admission minute")
+    ```
+
+    -   length of hospital stay (anything unusual?)\
+        There are patients with 0 hours of hospital stay.
+
+    ```{r}
+    admissions_tble %>%
+      ggplot(aes(x=difftime(dischtime,admittime, unit="hours")))+
+      geom_bar()+
+      xlim(0,1800)+
+      ylim(0,130)+
+      labs(x="length of hispital stay by hour")
+    ```
 
 ## Q4. `patients` data
 
@@ -166,6 +237,10 @@ zcat ~/mimic/core/patients.csv.gz| head -10
 ```
 
 1.  Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/core/patients/>) as a tibble `patients_tble` and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
+
+    ```{r}
+    patients_tble<- read_csv(str_escape())
+    ```
 
 2.  Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
 
@@ -186,8 +261,8 @@ zcat ~/mimic//hosp/d_labitems.csv.gz| head -10
 1.  Find how many rows are in `labevents.csv.gz`.
 
     ```{r}
-    #labevents_tble<-read_csv(str_c(mimic_path, "/hosp/labevents.csv.gz"))
-    #nrow(labevents_tble)
+    labevents_tble<-read_csv(str_c(mimic_path, "/hosp/labevents.csv.gz"), col_select = c("subject_id","itemid","charttime","valuenum"))
+
     ```
 
 2.  We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), and glucose (50931). Retrieve a subset of `labevents.csv.gz` only containing these items for the patients in `icustays_tble` as a tibble `labevents_tble`.
