@@ -239,10 +239,31 @@ zcat ~/mimic/core/patients.csv.gz| head -10
 1.  Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/core/patients/>) as a tibble `patients_tble` and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
 
     ```{r}
-    patients_tble<- read_csv(str_escape())
+    patients_tble<-
+      read_csv(str_c(mimic_path, "/core/patients.csv.gz")) %>%
+      semi_join (icustays_tble, by= "subject_id") %>%
+      print (width=Inf)
     ```
 
 2.  Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
+
+    ```{r}
+    patients_tble %>%
+      ggplot(aes(x=gender))+
+      geom_bar()+
+      labs(x="Summary of gender")
+    ```
+
+    There are more males than females in the patients_tble.
+
+    ```{r}
+    patients_tble %>%
+      ggplot(aes(x=anchor_age))+
+      geom_bar()+
+      labs(x="Summary of anchor_age")
+    ```
+
+There is an unusual amount of people who are 91 years old and no one for 90 and below 18. It is likely that the participants below 18 were rare and categorized as 18. Patients above 90 are recorded as 91.
 
 ## Q5. Lab results
 
