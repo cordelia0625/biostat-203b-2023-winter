@@ -1,6 +1,6 @@
 *Cordelia Lee*
 
-### Overall Grade: 95/120
+### Overall Grade: 107/120
 
 ### Quality of report: 10/10
 
@@ -20,14 +20,12 @@
 
     Yes
 
-### Completeness, correctness and efficiency of solution: 54/70
+### Completeness, correctness and efficiency of solution: 64/70
 
 - Q1 (10/10)
 
-- Q2 (10/20)
+- Q2 (20/20)
 
-    No completion certificate is included. `-10`
-    
 - Q3 (20/20)
 
 - Q4 (9/10)
@@ -60,15 +58,11 @@
 
     Yes
     
-### Reproducibility: 7/10
+### Reproducibility: 9/10
 
 - Are the materials (files and instructions) submitted to the `main` branch sufficient for reproducing all the results? Just click the `render` button will produce the final `html`? 
-
-    Q4.1: We should run the wget command to download  `pg42671.txt` in the background by `#| eval: true`. `-1.0`
     
     Q4.3: We should include `middle.sh` in Git or run a code to make this. `-1.0`
-
-    Q4.3: We expect you to display the output on html by `#| eval: true`. `-1.0`
     
 - If necessary, are there clear instructions, either in report or in a separate file, how to reproduce the results?
 
