@@ -258,7 +258,7 @@ zcat ~/mimic/core/patients.csv.gz| head -10
 
     ```{r}
     patients_tble %>%
-      ggplot(aes(x=anchor_age))+
+      ggplot(aes(x=anchor_age, fill=gender))+
       geom_bar()+
       labs(x="Summary of anchor_age")
     ```
@@ -323,8 +323,8 @@ dlabitems_tble<-read_csv(str_c(mimic_path,"/hosp/d_labitems.csv.gz"))%>%
 3.  Further restrict `labevents_tble` to the first lab measurement during the ICU stay.
 
 ```{r}
-    labevents_tble %>%
-      #only keep items during the frist ICU stay
+    labevents_tble<-labevents_tble %>%
+      #only keep items during the first ICU stay
       left_join(select(icustays_tble, subject_id, intime, outtime),
      by = c( "subject_id")) %>% 
       filter(charttime >= intime & charttime <= outtime) %>%
@@ -344,13 +344,6 @@ dlabitems_tble<-read_csv(str_c(mimic_path,"/hosp/d_labitems.csv.gz"))%>%
 ```
 
 4.  Summarize the lab measurements by appropriate numerics and graphics.
-
-    ```{r}
-    labevents_tble %>%
-      ggplot(aes(x=year(charttime)))+
-      geom_bar()+
-      labs(x="charttime year")
-    ```
 
 ```{r}
 labevents_tble %>%
@@ -382,58 +375,149 @@ labevents_tble %>%
   labs(x="charttime weekdays")
 ```
 
+```{r}
+labevents_tble %>%
+  ggplot(aes(y=itemid))+
+  geom_boxplot()+
+  labs(x="charttime year")
+```
+
 Ans: From the graphs above, we can see that the mode for chart time is around 6 hours. The closer to present years also had fewer chart times than the past. Also, chart times seems to be evenly distributed through the month and week, unlike the ICU stays date that had peaks.
 
 ## Q6. Vitals from charted events
 
 `chartevents.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/icu/chartevents/>) contains all the charted data available for a patient. During their ICU stay, the primary repository of a patient's information is their electronic chart. The `itemid` variable indicates a single measurement type in the database. The `value` variable is the value measured for `itemid`. The first 10 lines of `chartevents.csv.gz` are
 
-```{r}
-system(
-  str_c(
-    "zcat < ", 
-    str_c(mimic_path, "/icu/chartevents.csv.gz"), 
-    " | head"), 
-  intern = TRUE
-)
+```{bash}
+zcat ~/mimic/icu/chartevents.csv.gz | head -10
 ```
 
 `d_items.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/icu/d_items/>) is the dictionary for the `itemid` in `chartevents.csv.gz`.
 
-```{r}
-system(
-  str_c(
-    "zcat < ", 
-    str_c(mimic_path, "/icu/d_items.csv.gz"), 
-    " | head"), 
-  intern = TRUE
-)
+```{bash}
+zcat ~/mimic/icu/d_items.csv.gz | head -10
 ```
 
 1.  We are interested in the vitals for ICU patients: heart rate (220045), mean non-invasive blood pressure (220181), systolic non-invasive blood pressure (220179), body temperature in Fahrenheit (223761), and respiratory rate (220210). Retrieve a subset of `chartevents.csv.gz` only containing these items for the patients in `icustays_tble` as a tibble `chartevents_tble`.
 
     Hint: `chartevents.csv.gz` is a data file too big to be read in by the `read_csv` function in its default setting. Utilize the `col_select` option in the `read_csv` function to reduce the memory burden. It took my computer \>15 minutes to ingest this file. If your computer really has trouble importing `labevents.csv.gz`, you can import from the reduced data file `chartevents_filtered_itemid.csv.gz`.
 
+    ```{r}
+    chart_tble<-read_csv(str_c(mimic_path,"/icu/d_items.csv.gz"))%>%
+        filter(itemid %in% c(
+          220045,
+          220181,
+          220179,
+          223761,
+          220210
+          ))%>%
+        print(width=Inf)
+    ```
+
+    ```{r}
+    chartevents_tble<-
+          read_csv(str_c(mimic_path, "/icu/chartevents_filtered_itemid.csv.gz"), 
+                   col_select = c(subject_id,itemid,charttime,valuenum),
+                   col_types = cols_only(subject_id=col_double(),
+                                         itemid=col_double(),
+                                         charttime=col_datetime(),
+                                         valuenum=col_double())
+                   )%>%
+          semi_join(icustays_tble,by=c("subject_id"))%>%
+          filter(itemid %in% chart_tble$itemid)%>%
+          print(width=Inf)
+    ```
+
 2.  Further restrict `chartevents_tble` to the first vital measurement during the ICU stay.
 
+    ```{r}
+    chartevents_tble<-chartevents_tble %>%
+          #only keep items during the frist ICU stay
+          left_join(select(icustays_tble, subject_id, intime, outtime),
+         by = c( "subject_id")) %>% 
+          filter(charttime >= intime & charttime <= outtime) %>%
+           group_by(subject_id, itemid) %>%
+          arrange (charttime, .by_group= TRUE) %>%
+           slice_head(n=1) %>%
+           ungroup() %>%
+          # important to take out before pivot_wider or else multiple rows for an itemid woll be produced
+           select(-intime,-outtime,-charttime) %>%
+           pivot_wider(names_from = itemid, values_from=valuenum) %>%
+          rename_at(
+            vars(as.character(chart_tble$itemid)),
+                 ~str_to_lower(chart_tble$label)
+          ) %>%
+           print (width=Inf) 
+    ```
+
 3.  Summarize these vital measurements by appropriate numerics and graphics.
+
+    ```{r}
+    chartevents_tble %>%
+      ggplot(aes(x=`heart rate`))+
+      geom_boxplot()+
+      labs(x="heart rate distribution")
+    ```
+
+There is an outlier in heart rate that has abnormally high heart rate.
+
+```{r}
+chartevents_tble %>%
+  ggplot(aes(x=`respiratory rate`))+
+  geom_histogram()+
+  labs(x="respiratory rate distribution")
+```
+
+Respiratory rate seem to be slightly skewed to the right, which makes sense because the extremes are rare conditions.
 
 ## Q7. Putting things together
 
 Let us create a tibble `mimic_icu_cohort` for all ICU stays, where rows are the first ICU stay of each unique adult (age at admission \> 18) and columns contain at least following variables
 
 -   all variables in `icustays.csv.gz`\
+
 -   all variables in `admission.csv.gz`\
+
 -   all variables in `patients.csv.gz`\
+
 -   first lab measurements during ICU stay\
+
 -   first vital measurements during ICU stay
+
 -   an indicator variable `thirty_day_mort` whether the patient died within 30 days of hospital admission (30 day mortality)
+
+    ```{r}
+    mimic_icu_cohort<- icustays_tble %>%
+        left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>%
+        left_join(patients_tble, by = c("subject_id")) %>%
+        left_join(labevents_tble, by = c("subject_id")) %>%
+        left_join(chartevents_tble, by = c("subject_id")) %>%
+        mutate(admit_age = anchor_age + year(admittime) - anchor_year) %>%
+        # keep only patients aged over 18 at admission
+        filter(admit_age > 18) %>%
+      print(width=Inf)
+
+    ```
+
+    ```{r}
+    # create thirty_day_mort
+    mimic_icu_cohort<-mimic_icu_cohort %>% 
+      mutate(thirty_day_mort = 
+                 ifelse(is.na(deathtime), "FALSE", 
+                        ifelse(as.Date(deathtime) - as.Date(admittime) <= 30, 
+                               "TRUE", "FALSE"))) %>%
+      print (width=Inf)
+    ```
 
 ## Q8. Exploratory data analysis (EDA)
 
 Summarize following information using appropriate numerics or graphs.
 
 -   `thirty_day_mort` vs demographic variables (ethnicity, language, insurance, marital_status, gender, age at hospital admission)
+
+    ```{r}
+
+    ```
 
 -   `thirty_day_mort` vs first lab measurements
 
