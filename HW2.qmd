@@ -339,6 +339,7 @@ dlabitems_tble<-read_csv(str_c(mimic_path,"/hosp/d_labitems.csv.gz"))%>%
         vars(as.character(dlabitems_tble$itemid)),
              ~str_to_lower(dlabitems_tble$label)
       ) %>%
+      rename(WBC="white blood cells") %>%
        print (width=Inf) 
     
 ```
@@ -347,42 +348,30 @@ dlabitems_tble<-read_csv(str_c(mimic_path,"/hosp/d_labitems.csv.gz"))%>%
 
 ```{r}
 labevents_tble %>%
-  ggplot(aes(x=hour(charttime)))+
-  geom_bar()+
-  labs(x="charttime hour")
+  ggplot(aes(x=WBC))+
+  geom_histogram(bins=60)+
+  xlim(0,100)
+  labs(x="white blood cells")
 
 ```
 
 ```{r}
 labevents_tble %>%
-  ggplot(aes(x=year(charttime)))+
+  ggplot(aes(x=sodium))+
   geom_bar()+
-  labs(x="charttime minue")
+  labs(x="sodium")
 
 ```
 
 ```{r}
 labevents_tble %>%
-  ggplot(aes(x=mday(charttime)))+
+  ggplot(aes(x=glucose))+
   geom_bar()+
-  labs(x="charttime month day")
+  xlim(0,1000)+
+  labs(x="glucose")
 ```
 
-```{r}
-labevents_tble %>%
-  ggplot(aes(x=weekdays.Date(charttime)))+
-  geom_bar()+
-  labs(x="charttime weekdays")
-```
-
-```{r}
-labevents_tble %>%
-  ggplot(aes(y=itemid))+
-  geom_boxplot()+
-  labs(x="charttime year")
-```
-
-Ans: From the graphs above, we can see that the mode for chart time is around 6 hours. The closer to present years also had fewer chart times than the past. Also, chart times seems to be evenly distributed through the month and week, unlike the ICU stays date that had peaks.
+Ans: From the graphs above, we can see that the mode white blood cell count is around 12 to 13. The sodium labs seems to be normally distributed. Lastly, there are a few outliers in the glucose measurements, which might be patients that are diabetic.
 
 ## Q6. Vitals from charted events
 
@@ -455,7 +444,7 @@ zcat ~/mimic/icu/d_items.csv.gz | head -10
 
     ```{r}
     chartevents_tble %>%
-      ggplot(aes(x=`heart rate`))+
+      ggplot(aes(x=HR))+
       geom_histogram()+
       xlim(0,200)
       labs(x="heart rate")
@@ -597,9 +586,8 @@ Summarize following information using appropriate numerics or graphs.
     ```{r}
     mimic_icu_cohort %>%
       ggplot(aes(x=HR, fill= thirty_day_mort))+
-      geom_histogram(bins=50)+
-      xlim(0,250)+
-      labs(title="Summary of thrity day mortality and first vital measures")
+      geom_bar()+
+      labs(title="Summary of thirty day mortality and first vital measures")
     ```
 
     Ans: I summarized the heart rate for the two groups and the distribution seems to be the same. Population that passed away within 30 days of hospital admissions seemed to be less peaked.
