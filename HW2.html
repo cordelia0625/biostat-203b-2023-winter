@@ -264,18 +264,18 @@ lrwxrwxrwx    1 root     root            31 Jan 27 01:06 mimic-iv-1.0 -&gt; /C:/
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">read.csv</span>(<span class="fu">str_c</span>(mimic_path, <span class="st">"/core/admissions.csv.gz"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-   6.81    0.09    6.93 </code></pre>
+   7.31    0.05    7.35 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># read_csv("~/mimic/core/admissions.csv.gz")</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">read_csv</span>(<span class="fu">str_c</span>(mimic_path, <span class="st">"/core/admissions.csv.gz"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-   2.16    0.27    0.93 </code></pre>
+   2.92    0.31    1.07 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">fread</span>(<span class="fu">str_c</span>(mimic_path, <span class="st">"/core/admissions.csv.gz"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>   user  system elapsed 
-   0.52    0.06    0.49 </code></pre>
+   0.56    0.10    0.51 </code></pre>
 </div>
 </div>
 <p>Ans: the one that appears to be the fastest is the read.csv function. The read_csv one seemed to be the slowest. There is a difference between the default and the one in tidyverse. read_csv noticed some issues with the column.</p>
