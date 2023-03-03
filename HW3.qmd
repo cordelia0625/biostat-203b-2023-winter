@@ -1,7 +1,7 @@
 ---
 title: "Biostat 203B Homework 3"
 subtitle: Due Mar 1 @ 11:59PM
-author: YOUR NAME and UID
+author: Cordelia Lee 105361901
 format:
   html:
     theme: cosmo
@@ -62,6 +62,8 @@ bq_auth(
    scopes = c("https://www.googleapis.com/auth/bigquery",
      "https://www.googleapis.com/auth/cloud-platform")
 )
+
+
 ```
 
 1.  Connect to BigQuery database `mimic4_v1_0_203b` in GCP (Google Cloud Platform), using the billing account `biostat-203b-2022winter`.
@@ -108,7 +110,7 @@ icustays_tble <- icustays_tble %>%
 
 ```{r}
 # # TODO
-admissions_tble <-  tbl(con, "admissions") %>%
+admissions_tble <- tbl(con, "admissions") %>%
   semi_join(icustays_tble, by = c("subject_id", "hadm_id")) %>%
   show_query() %>%
   print(width = Inf)
@@ -118,7 +120,7 @@ admissions_tble <-  tbl(con, "admissions") %>%
 
 ```{r}
 # # TODO
-patients_tble <-tbl(con, "patients") %>%
+patients_tble <- tbl(con, "patients") %>%
   semi_join(icustays_tble, by = c("subject_id")) %>%
   show_query() %>%
   print(width = Inf)
@@ -151,10 +153,10 @@ labevents_tble <- labevents_tble %>%
        group_by(subject_id, itemid) %>%
        slice_min(subject_id) %>%
        ungroup() %>%
-      # important to take out before pivot_wider or else multiple rows for an itemid woll be produced
        select(c(subject_id, hadm_id, itemid, valuenum)) %>%
-       pivot_wider(names_from = itemid, values_from=valuenum, names_glue = "item_{itemid}") %>%
-       print (width=Inf)
+       pivot_wider(names_from = itemid, values_from = valuenum, 
+                     names_glue = "item_{itemid}") %>%
+       print (width = Inf)
 
 
 # need to rename the item ids with the dlabitems 
@@ -180,15 +182,15 @@ Only keep the first chart events during ICU stay and pivot chart events to becom
 # # TODO
 chartevents_tble <- chartevents_tble %>% 
   left_join(select(icustays_tble, subject_id, intime, outtime),
-     by = c( "subject_id")) %>% 
+     by = c("subject_id")) %>% 
       filter(charttime >= intime & charttime <= outtime) %>%
        group_by(subject_id, itemid) %>%
        slice_min(subject_id) %>%
        ungroup() %>%
-      # important to take out before pivot_wider or else multiple rows for an itemid woll be produced
        select(c(subject_id, hadm_id, itemid, valuenum)) %>%
-       pivot_wider(names_from = itemid, values_from=valuenum, names_glue = "item_{itemid}") %>%
-       print (width=Inf) 
+       pivot_wider(names_from = itemid, values_from = valuenum, 
+                   names_glue = "item_{itemid}") %>%
+       print (width = Inf) 
 ```
 
 8.  Put things together. This step is similar to Q7 of HW2. Using one chain of pipes `%>%` to perform following data wrangling steps: (i) start with the `icustays_tble` for the first ICU stay of each unique patient, (ii) merge in admissions and patients tables, (iii) keep adults only (age at admission \>= 18), (iv) merge in the labevents and chartevents tables, (v) create an indicator for 30-day mortality, (vi) save the final tibble to an `icu_cohort.rds` R data file in the `mimiciv_shiny` folder.
@@ -215,13 +217,13 @@ icu_cohort <- icustays_tble %>%
                     ifelse(datetime_diff(admittime, deathtime, Day) <= 30, 
                            "TRUE", "FALSE"))) %>%
     show_query() %>%
-  print(width=Inf)
+  print(width = Inf)
 ```
 
 Close database connection and clear workspace.
 
 ```{r, eval=T}
-saveRDS(icu_cohort, file = "icu_cohort.RDS")
+saveRDS(icu_cohort, file = "mimiciv_shiny/icu_cohort.RDS") 
 dbDisconnect(con)
 rm(list = ls())
 ```
