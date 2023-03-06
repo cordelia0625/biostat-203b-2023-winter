@@ -8,12 +8,12 @@
 #
 
 library(shiny)
-library(bigrquery)
-library(dbplyr)
-library(DBI)
-library(lubridate)
-library(tidyverse)
+library(dplyr)
 library(ggplot2)
+library(datasets)
+library(tidyverse)
+library(lubridate)
+
 
 
 #load data
@@ -34,26 +34,23 @@ ui <- fluidPage(
                       "Language" = "language",
                       "Insurance" = "insurance",
                       "Marital status" = "marital_status",
-                      "Gender" = "gender")
-        ),
-        selectInput("m",
-                    "Choose a measurement for the histogram",
-                    choice = list (
-                      "Creatinine" = "lab50912",
-                      "Potassium" = "lab50971",
-                      "Sodium" = "lab50983",
-                      "Chloride" = "lab50902",
-                      "Bicarbonate" = "lab50882",
-                      "Hematocrit" = "lab51221",
-                      "White Blood Cell" = "lab51301",
-                      "Glucose" = "lab50931",
-                      "Magnesium" = "lab50960",
-                      "Calcium" = "lab50893",
-                      "Heart Rate" = "chart220045",
-                      "Mean Non-invasive Blood Pressure" = "chart220181",
-                      "Systolic Non-invasive Blood Pressure" = "chart220179",
-                      "Body Temperature in Fahrenheit" = "chart223761",
-                      "Respiratory Rate" = "chart220210"
+                      "Gender" = "gender",
+                      "First Care Unit" = "first_careunit",
+                      "Creatinine" = "item_50912",
+                      "Potassium" = "item_50971",
+                      "Sodium" = "item_50983",
+                      "Chloride" = "item_50902",
+                      "Bicarbonate" = "item_50882",
+                      "Hematocrit" = "item_51221",
+                      "White Blood Cell" = "item_51301",
+                      "Glucose" = "item_50931",
+                      "Magnesium" = "item_50960",
+                      "Calcium" = "item_50893",
+                      "Heart Rate" = "item_220045",
+                      "Mean Non-invasive Blood Pressure" = "item_220181",
+                      "Systolic Non-invasive Blood Pressure" = "item_220179",
+                      "Body Temperature in Fahrenheit" = "item_223761",
+                      "Respiratory Rate" = "item_220210"
                     )),
         
       
@@ -61,8 +58,10 @@ ui <- fluidPage(
       
       mainPanel(
         tabsetPanel(type = "tabs",
-                    tabPanel("Bar Graphs", plotOutput("myplot1")),
-                    tabPanel("Histograms", verbatimTextOutput("myplot2")),
+                    tabPanel("Bar Graph for 30 day mortality", 
+                             plotOutput("myplot1")),
+                    tabPanel("Chart and Lab measurements", 
+                             verbatimTextOutput("myplot2")),
                     tabPanel("Table", tableOutput("table"))
         )
       )
@@ -86,24 +85,51 @@ server <- function(input, output) {
   })
   
   
-  output$myplot2 <- renderPlot ({
+   output$myplot2 <- renderPlot ({
+     
+     
+     # mydata %>%
+     #   ggplot(aes_string(x = "item_50971" )) +
+     #   geom_bar(aes(stat = "identity")) +
+     #   labs(x = "item_50971", title = "My Bar Graph")
+     
+     select(input$var, "thirty_day_mort") %>%
+       filter(.[, 1] > 0) %>%
+       group_by_("thirty_day_mort") %>%
+       na.omit() %>% 
+       ggplot(mapping = aes_string(x = "thirty_day_mort", y = input$var)) +
+       geom_boxplot() +
+       labs(title = 
+              "Distribution for selected variable by 30-day mortality") +
+       labs(x = "30-day mortality") +
+       coord_flip() 
+   })
+ 
     
-    mydata %>%
-      ggplot() +
-      geom_bar(mapping = 
-                 aes_string(x = input$m, fill=thirty_day_mort), 
-               position = "fill") +
-      labs(title="Histogram of chart / lab event")
+  
+  
+  
+  output$table <- renderTable({
+   
+    m_col <- input$m
+    
+    mydata%>%
+      filter(!!sym(m_col) > 0) %>%
+      summarise(avg = mean(!!sym(m_col), na.rm = TRUE),
+                total = sum(!!sym(m_col), na.rm = TRUE)) %>%
+      mutate(min = min(!!sym(m_col), na.rm = TRUE),
+             max = max(!!sym(m_col), na.rm = TRUE),
+             Q1 = quantile(!!sym(m_col), 0.25),
+             Median = median(!!sym(m_col), na.rm = TRUE),
+             Q3 = quantile(!!sym(m_col), 0.75),
+             Sd = sd(!!sym(m_col), na.rm = TRUE)) %>%
+      select(avg, total, min, max, Q1, Median, Q3, Sd)
+      
+    
   })
-    
-    
-    
-
-  
-  
-  
   
 }
 
-# Run the app
+
+
 shinyApp(ui = ui, server = server)
