@@ -40,9 +40,9 @@ I found the current versions of bigrquery (v1.4.1) and dbplyr (v2.3.0) don't wor
 
 ```{r}
 #| eval: true
-# library(devtools)
-# install_version("bigrquery", version = "1.4.0")
-# install_version("dbplyr", version = "2.1.1")
+ library(devtools)
+ install_version("bigrquery", version = "1.4.0")
+ install_version("dbplyr", version = "2.1.1")
 ```
 
 ## Q1. Compile the ICU cohort in HW2 from the Google BigQuery database
@@ -232,11 +232,5 @@ rm(list = ls())
 
 Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the `mimiciv_shiny` folder. The app should provide easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort.
 
-```{r}
-icu_cohort <- read_rds("D:\\Desktop\\203b-hw\\mimiciv_shiny\\icu_cohort.RDS")
-icu_cohort %>%
-   ggplot(aes_string(x = "first_careunit" )) +
-       geom_bar(aes(stat = "identity")) +
-       labs(x = "first care unit", title = "My Bar Graph")
-```
+
 
