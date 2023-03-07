@@ -134,7 +134,7 @@ labevents_tble <- tbl(con, "labevents" ) %>%
   select(subject_id, itemid, charttime, valuenum, hadm_id) %>%
   semi_join(icustays_tble, by = c("subject_id" = "subject_id", 
                                   "hadm_id" = "hadm_id")) %>%
-  filter (itemid %in% c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931)) %>%
+  filter (itemid %in% c(50912, 50971, 50983, 50902, 50882, 51221, 51301, 50931, 50960)) %>%
   show_query() %>%
   print(width = Inf)
   
@@ -236,6 +236,13 @@ rm(list = ls())
 
 Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the `mimiciv_shiny` folder. The app should provide easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort.
 
+```{r}
+mydata <- read_rds("D:\\Desktop\\203b-hw\\mimiciv_shiny\\icu_cohort.RDS")
+     mydata %>%
+       ggplot(aes_string(x = "item_51301")) +
+       geom_boxplot() +
+      labs(x = "ICU", title = "My Bar Graph")
+```
 
 
 

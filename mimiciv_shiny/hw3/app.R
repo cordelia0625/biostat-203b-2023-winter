@@ -13,7 +13,7 @@ library(ggplot2)
 library(datasets)
 library(tidyverse)
 library(lubridate)
-library(knitr) # Load the package
+
 
 
 
@@ -38,7 +38,11 @@ ui <- fluidPage(
                     "Insurance" = "insurance",
                     "Marital status" = "marital_status",
                     "Gender" = "gender",
-                    "First Care Unit" = "first_careunit",
+                    "First Care Unit" = "first_careunit"
+
+                  )),
+      selectInput("m", label = "Choose a chart or lab measurement",
+                  choice = list(
                     "Creatinine" = "item_50912",
                     "Potassium" = "item_50971",
                     "Sodium" = "item_50983",
@@ -48,33 +52,15 @@ ui <- fluidPage(
                     "White Blood Cell" = "item_51301",
                     "Glucose" = "item_50931",
                     "Magnesium" = "item_50960",
-                    "Calcium" = "item_50893",
                     "Heart Rate" = "item_220045",
                     "Mean Non-invasive Blood Pressure" = "item_220181",
                     "Systolic Non-invasive Blood Pressure" = "item_220179",
                     "Body Temperature in Fahrenheit" = "item_223761",
                     "Respiratory Rate" = "item_220210"
-
+                    
                   )),
-        selectInput("m", label = "Choose a variable for the bar graph",
-                 choice = list(
-                   "First Care Unit" = "first_careunit",
-                   "Creatinine" = "item_50912",
-                   "Potassium" = "item_50971",
-                   "Sodium" = "item_50983",
-                   "Chloride" = "item_50902",
-                   "Bicarbonate" = "item_50882",
-                   "Hematocrit" = "item_51221",
-                   "White Blood Cell" = "item_51301",
-                   "Glucose" = "item_50931",
-                   "Magnesium" = "item_50960",
-                   "Calcium" = "item_50893",
-                   "Heart Rate" = "item_220045",
-                   "Mean Non-invasive Blood Pressure" = "item_220181",
-                   "Systolic Non-invasive Blood Pressure" = "item_220179",
-                   "Body Temperature in Fahrenheit" = "item_223761",
-                   "Respiratory Rate" = "item_220210"
-                 )),
+   
+       
                   
       
       
@@ -85,8 +71,8 @@ ui <- fluidPage(
                   tabPanel("Bar Graph for 30 day mortality", 
                            plotOutput("myplot1")),
                   tabPanel("Chart and Lab measurements", 
-                           verbatimTextOutput("myplot2")),
-                  tabPanel("Table", tableOutput("table"))
+                           plotOutput("myplot2")),
+                  tabPanel("Summary", tableOutput("table"))
       )
     )
   )
@@ -99,24 +85,24 @@ ui <- fluidPage(
 # Define server
 server <- function(input, output) {
   output$myplot1 <- renderPlot({
+
     # Create a histogram using ggplot2
     mydata %>%
       ggplot() +
-      geom_bar(mapping = 
-                 aes_string(x = "thirty_day_mort", fill = input$var), 
+      geom_bar(mapping =
+                 aes_string(x = "thirty_day_mort", fill = input$var),
                position = "fill") +
-      labs( title = "Bar graph of thirty day mortality percentage")
+      labs(title = "Bar graph of thirty day mortality percentage")
   })
   
   
   output$myplot2 <- renderPlot ({
-    
-    mydata %>%
-       ggplot(aes_string(x = input$var )) +
-       geom_bar(aes(stat = "identity")) +
-       labs(x = input$var, title = "My Bar Graph")
-   
-    
+  
+    # m_list <- list(input$m)
+    mydata %>% 
+      ggplot(aes_string(x = input$m)) + 
+      geom_boxplot() + 
+      labs(x = input$m, title = "Distribution of selected Lab or Chart event") 
   
   })
   
@@ -127,18 +113,7 @@ server <- function(input, output) {
   output$table <- renderPrint({
     summary(mydata[input$m])
     
-  
-  
-    
-    
-   
-    
-    
-    
-    # mydata %>%
-    #   group_by_(input$m)  %>%
-    #   summarize(n = n()) %>%
-    #   mutate(prop = n / sum(n)) 
+
   })
     
     
