@@ -236,15 +236,6 @@ rm(list = ls())
 
 Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the `mimiciv_shiny` folder. The app should provide easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort.
 
-```{r}
-mydata <- read_rds("D:\\Desktop\\203b-hw\\mimiciv_shiny\\icu_cohort.RDS")
-     mydata %>%
-       ggplot(aes_string(x = "item_51301")) +
-       geom_boxplot() +
-      labs(x = "ICU", title = "My Bar Graph")
-```
-
-
 
 
 
