@@ -164,7 +164,7 @@ zcat ~/mimic/core/admissions.csv.gz| head -10
     ```{r}
     admissions_tble %>%
       ggplot(aes(x=year(admittime)))+
-      geom_bar()+
+      geom_bar() +
       labs(x="admission year")
 
     ```
@@ -173,8 +173,8 @@ zcat ~/mimic/core/admissions.csv.gz| head -10
 
     ```{r}
     admissions_tble %>%
-      ggplot(aes(x=months.Date(admittime)))+
-      geom_bar()+
+      ggplot(aes(x=months.Date(admittime))) +
+      geom_bar() +
       labs(x="admission month")
     ```
 
@@ -225,7 +225,7 @@ zcat ~/mimic/core/admissions.csv.gz| head -10
       geom_bar()+
       xlim(0,1800)+
       ylim(0,130)+
-      labs(x="length of hispital stay by hour")
+      labs(x = "length of hispital stay by hour")
     ```
 
 ## Q4. `patients` data
@@ -241,8 +241,8 @@ zcat ~/mimic/core/patients.csv.gz| head -10
     ```{r}
     patients_tble<-
       read_csv(str_c(mimic_path, "/core/patients.csv.gz")) %>%
-      semi_join (icustays_tble, by= "subject_id") %>%
-      print (width=Inf)
+      semi_join (icustays_tble, by = "subject_id") %>%
+      print (width = Inf)
     ```
 
 2.  Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
@@ -602,5 +602,7 @@ Summarize following information using appropriate numerics or graphs.
       scale_x_discrete(guide = guide_axis(n.dodge=5))+
       labs(title="Summary of mortality and hospital admission age")
     ```
+
+![](http://127.0.0.1:60495/chunk_output/s/E509E4DB/c3cauga46u3dr/000010.png?resize=6)
 
 Ans: The care unit that has the highest 30 day mortality count is MICU, which is reasonable because patients get admitted to MICU when they are critically ill.
