@@ -23,7 +23,7 @@ knitr:
 
 Display machine information:
 ```{r}
-#| eval: false
+#| eval: true
 
 sessionInfo()
 ```
@@ -34,6 +34,8 @@ Load database libraries and the tidyverse frontend:
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(tidymodels))
 suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(glmnet))
+install.packages(GGally)
 ```
 
 ## Predicting 30-day mortality
@@ -79,9 +81,16 @@ data_split
 ## Logistic Regression 
 1. Partition data into 50% training set and 50% test set. Stratify partitioning according the 30-day mortality status.
 ```{r}
-library (tidymodels)
+library(GGally)
+library(gtsummary)
+library(ranger)
+library(tidyverse)
+library(tidymodels)
 # load the data "icu_cohort"
-icu_cohort <- read_rds("mimiciv_shiny/icu_cohort.rds")
+icu_cohort <- read_rds("mimiciv_shiny/icu_cohort.rds") 
+
+# only keep the variables wanted
+
 set.seed(203)
 
 #splitting data 
@@ -100,3 +109,84 @@ icu_cohort_test <- testing(data_split)
 dim(icu_cohort_test)
 ```
 2. Train and tune the models using the training set.
+```{r}
+logit_recipe <- 
+  recipe(
+    thirty_day_mort ~ ., 
+    data = icu_cohort
+  ) %>%
+  # ignore missing data and impute because sample size is large
+   step_impute_mode( marital_status, ethnicity) %>%
+   step_impute_mean("item_50912", "item_50971", "item_50912",
+       "item_50971",
+     "item_50983",
+      "item_50902",
+      "item_50882",
+      "item_51221",
+      "item_51301",
+      "item_50931",
+     "item_220045",
+      "item_220181",
+      "item_220179",
+      "item_223761",
+      "item_220210")%>%
+  # create traditional dummy variables
+  step_dummy(all_nominal_predictors()) %>%
+  # zero-variance filter
+  step_zv(all_numeric_predictors()) %>% 
+  # center and scale numeric data
+  step_normalize(all_numeric_predictors()) %>%
+  # estimate the means and standard deviations
+  prep(training = icu_cohort_other, retain = TRUE)
+logit_recipe
+```
+Model 
+```{r}
+logit_mod <- 
+  logistic_reg(
+    penalty = tune(), 
+    mixture = tune()
+  ) %>% 
+  set_engine("glmnet", standardize = FALSE)
+logit_mod
+```
+Workflow
+```{r}
+logit_wf <- workflow() %>%
+  add_recipe(logit_recipe) %>%
+  add_model(logit_mod)
+logit_wf
+```
+Tuning grid 
+```{r}
+param_grid <- grid_regular(
+  penalty(range = c(-6, 3)), 
+  mixture(),
+  levels = c(100, 5)
+  )
+param_grid
+```
+Cross-validation
+```{r}
+set.seed(203)
+
+folds <- vfold_cv(icu_cohort_other, v = 5)
+folds
+```
+fit CV
+```{r}
+#str(icu_cohort)
+logit_fit <- logit_wf %>%
+  tune_grid(
+    resamples = folds,
+    grid = param_grid,
+    metrics = metric_set(roc_auc, accuracy)
+    )
+
+```
+##Random Forest 
+```{r}
+
+```
+
+
