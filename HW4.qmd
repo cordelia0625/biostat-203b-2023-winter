@@ -1,7 +1,7 @@
 ---
 title: "Biostat 203B Homework 4"
 subtitle: Due Mar 24 @ 11:59PM
-author: Cordelia Lee UID: 105361901
+author: Cordelia Lee UID:105361901
 format:
   html:
     theme: cosmo
@@ -215,6 +215,30 @@ logit_fit %>%
 best_logit <- logit_fit %>%
   select_best("roc_auc")
 best_logit
+```
+
+```{r}
+best_logit <- logit_fit %>%
+  select_best("roc_auc")
+best_logit
+```
+```{r}
+# Final workflow
+final_wf <- logit_wf %>%
+  finalize_workflow(best_logit)
+final_wf
+```
+```{r}
+# Fit the whole training set, then predict the test cases
+final_fit <- 
+  final_wf %>%
+  last_fit(data_split)
+final_fit
+```
+```{r}
+# Test metrics
+final_fit %>% 
+  collect_metrics()
 ```
 
 
