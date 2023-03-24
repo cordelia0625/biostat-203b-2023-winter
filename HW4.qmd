@@ -42,37 +42,14 @@ suppressPackageStartupMessages(library(glmnet))
 Using the ICU cohort `icu_cohort.rds` you built in Homework 3, develop at least three analytic approaches for predicting the 30-day mortality of patients admitted to ICU using demographic information (gender, age, marital status, ethnicity), first lab measurements during ICU stay, and first vital measurements during ICU stay. For example, you can use (1) logistic regression with elastic net (lasso + ridge) penalty (e.g., glmnet or keras package), (2) random forest, (3) boosting, and (4) support vector machines, or (5) MLP neural network (keras package)
 
 1. Partition data into 50% training set and 50% test set. Stratify partitioning according the 30-day mortality status.
-
-```{r}
-
-```
-
-
-2. Train and tune the models using the training set.
-```{r}
-
-```
-
-
-3. Compare model classification performance on the test set. Report both the area under ROC curve and accuracy for each model.
-
-```{r}
-# might do random forest, XGboost (tuning might need to pass n-jobs. 
-# will take a long time), SVM need to standardize  
-# to speed up, don't do large epochs (do 5) and don't tune too much if MLP 
-# MLP do 2 4 8 or 12 for hidden units. don't tune drop out. 
-# logistic regression
-
-```
-
-## Logistic Regression 
-1. Partition data into 50% training set and 50% test set. Stratify partitioning according the 30-day mortality status.
 ```{r}
 library(GGally)
 library(gtsummary)
 library(ranger)
 library(tidyverse)
 library(tidymodels)
+library(GGally)
+library(xgboost)
 # load the data "icu_cohort"
 icu_cohort <- read_rds("mimiciv_shiny/icu_cohort.rds")%>% 
 # only keep the variables wanted. discarded those with a lot NAs
@@ -99,6 +76,7 @@ dim(icu_cohort_other)
 icu_cohort_test <- testing(data_split)
 dim(icu_cohort_test)
 ```
+## Logistic Regression 
 2. Train and tune the models using the training set.
 ```{r}
 logit_recipe <- 
@@ -259,6 +237,7 @@ rf_recipe <-
   prep(training = icu_cohort_other, retain = TRUE)
 rf_recipe
 ```
+Model 
 ```{r}
 rf_mod <- 
   rand_forest(
@@ -278,6 +257,7 @@ rf_wf <- workflow() %>%
   add_model(rf_mod)
 rf_wf
 ```
+Tuning grid 
 ```{r}
 param_grid <- grid_regular(
   trees(range = c(100L, 300L)), 
@@ -286,12 +266,7 @@ param_grid <- grid_regular(
   )
 param_grid
 ```
-```{r}
-set.seed(203)
-
-folds <- vfold_cv(icu_cohort_other, v = 5)
-folds
-```
+Cross validation
 ```{r}
 rf_fit <- rf_wf %>%
   tune_grid(
@@ -323,6 +298,7 @@ best_rf <- rf_fit %>%
 best_rf
 ```
 
+Finalizing Model
 ```{r}
 # Final workflow
 final_wf <- rf_wf %>%
@@ -343,9 +319,122 @@ final_fit %>%
   collect_metrics()
 ```
 
+##XGBoost
+Data summary
+```{r}
+# Numerical summaries stratified by the outcome `AHD`.
+icu_cohort %>% tbl_summary(by = thirty_day_mort)
+```
+```{r}
+gb_recipe <- 
+  recipe(
+    thirty_day_mort ~ ., 
+    data = icu_cohort_other
+  ) %>%
+ step_impute_mode(marital_status, ethnicity, gender) %>%
+   step_impute_mean(item_50912, item_50971, item_50912,
+       item_50971,
+     item_50983,
+      item_50902,
+      item_50882,
+      item_51221,
+      item_51301,
+      item_50931,
+     item_220045,
+      item_220181,
+      item_220179,
+      item_223761,
+      item_220210)%>%
+  step_dummy(all_nominal_predictors()) %>%
+  # zero-variance filter
+  step_zv(all_numeric_predictors()) %>% 
+  # estimate the means and standard deviations
+  prep(training = icu_cohort_other, retain = TRUE)
+gb_recipe
+  
+```
+Model 
+```{r}
+gb_mod <- 
+  boost_tree(
+    mode = "classification",
+    trees = 1000, 
+    tree_depth = tune(),
+    learn_rate = tune()
+  ) %>% 
+  set_engine("xgboost")
+gb_mod
+```
+Workflow and pipeline
+```{r}
+gb_wf <- workflow() %>%
+  add_recipe(gb_recipe) %>%
+  add_model(gb_mod)
+gb_wf
+```
+Tuning grid 
+```{r}
+param_grid <- grid_regular(
+  tree_depth(range = c(1L, 3L)),
+  learn_rate(range = c(-5, 2), trans = log10_trans()),
+  levels = c(3, 10)
+  )
+param_grid
+```
 
+```{r}
+gb_fit <- gb_wf %>%
+  tune_grid(
+    resamples = folds,
+    grid = param_grid,
+    metrics = metric_set(roc_auc, accuracy)
+    )
+gb_fit
+```
+Visualize results 
+```{r}
+gb_fit %>%
+  collect_metrics() %>%
+  print(width = Inf) %>%
+  filter(.metric == "roc_auc") %>%
+  ggplot(mapping = aes(x = learn_rate, y = mean, color = tree_depth)) +
+  geom_point() +
+  labs(x = "Learning Rate", y = "CV AUC") +
+  scale_x_log10()
+```
 
+```{r}
+gb_fit %>%
+  show_best("roc_auc")
+```
 
+select the best model 
+```{r}
+best_gb <- gb_fit %>%
+  select_best("roc_auc")
+best_gb
+```
 
+finalize our model
+```{r}
+# Final workflow
+final_wf <- gb_wf %>%
+  finalize_workflow(best_gb)
+final_wf
+```
 
+```{r}
+# Fit the whole training set, then predict the test cases
+final_fit <- 
+  final_wf %>%
+  last_fit(data_split)
+final_fit
+```
 
+```{r}
+# Test metrics
+final_fit %>% 
+  collect_metrics()
+```
+
+3. Compare model classification performance on the test set. Report both the area under ROC curve and accuracy for each model.
