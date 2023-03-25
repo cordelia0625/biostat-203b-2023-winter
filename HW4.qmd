@@ -89,7 +89,7 @@ logit_recipe <-
    step_impute_mode(marital_status, ethnicity, gender) %>%
    step_impute_mean(item_50912, item_50971, item_50912,
        item_50971,
-     item_50983,
+       item_50983,
       item_50902,
       item_50882,
       item_51221,
@@ -152,12 +152,11 @@ logit_fit <- logit_wf %>%
     grid = param_grid,
     metrics = metric_set(roc_auc, accuracy)
     )
-
-```
-
-```{r}
 logit_fit
+
 ```
+
+
 ```{r}
 logit_fit %>%
   collect_metrics() %>%
@@ -213,11 +212,11 @@ rf_recipe <-
     thirty_day_mort ~., 
     data = icu_cohort_other
   ) %>%
-  # # create traditional dummy variables (not necessary for random forest in R)
+  # create traditional dummy variables (not necessary for random forest in R)
   # step_dummy(all_nominal()) %>%
  step_impute_mode(marital_status, ethnicity, gender) %>%
    step_impute_mean(item_50912, item_50971, item_50912,
-       item_50971,
+    item_50971,
      item_50983,
       item_50902,
       item_50882,
@@ -228,7 +227,7 @@ rf_recipe <-
       item_220181,
       item_220179,
       item_223761,
-      item_220210)%>%
+      item_220210) %>%
   # zero-variance filter
   step_zv(all_numeric_predictors()) %>% 
   # # center and scale numeric data (not necessary for random forest)
@@ -313,6 +312,7 @@ final_fit <-
   last_fit(data_split)
 final_fit
 ```
+
 ```{r}
 # Test metrics
 final_fit %>% 
@@ -325,6 +325,7 @@ Data summary
 # Numerical summaries stratified by the outcome `AHD`.
 icu_cohort %>% tbl_summary(by = thirty_day_mort)
 ```
+
 ```{r}
 gb_recipe <- 
   recipe(
@@ -344,7 +345,7 @@ gb_recipe <-
       item_220181,
       item_220179,
       item_223761,
-      item_220210)%>%
+      item_220210) %>%
   step_dummy(all_nominal_predictors()) %>%
   # zero-variance filter
   step_zv(all_numeric_predictors()) %>% 
@@ -436,5 +437,8 @@ final_fit
 final_fit %>% 
   collect_metrics()
 ```
+From the three models selected, it appears that XGBoost has the highest ROC_AUC
+and has a slightly higher accuracy than random forest. 
 
-3. Compare model classification performance on the test set. Report both the area under ROC curve and accuracy for each model.
+
+
