@@ -1,6 +1,6 @@
 *Cordelia Lee*
 
-### Overall Grade: 144/180
+### Overall Grade: 149/180
 
 ### Quality of report: 10/10
 
@@ -59,13 +59,12 @@
 
     All yes
 
-### Reproducibility: 5/10
+### Reproducibility: 10/10
 
 This HW might be difficult to check reproducibility, esp for Windows users. Don't need to render each student's qmd. Just check html and let them know any practices that are not reproducible. 
 
 - Are the materials (files and instructions) submitted to the `master` branch sufficient for reproducing all the results? Just click the `Render` button will produce the final `html` on teaching server?
 
-    No, because of "C:\\Users\\Cordelia\\mimic-iv-1.0". `-5.0`
 
 - If necessary, are there clear instructions, either in report or in a separate file, how to reproduce the results?
 

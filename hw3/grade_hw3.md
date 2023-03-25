@@ -44,7 +44,7 @@ This HW might be difficult to check reproducibility, esp for Windows users. Don'
 
 - Are the materials (files and instructions) submitted to the `master` branch sufficient for reproducing all the results? Just click the `Render` button will produce the final `html` on teaching server? 
 
-    We do not have the path `C:\\Users\\Cordelia`. `-5.0`
+    (app) We do not have the path `C:\\Users\\Cordelia`. You can put just `read_rds("icu_cohort.rds")` `-5.0`
 
 - If necessary, are there clear instructions, either in report or in a separate file, how to reproduce the results?
 
